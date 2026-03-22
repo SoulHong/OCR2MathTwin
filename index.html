@@ -389,8 +389,13 @@
       };
 
       const generateTwins = async () => {
-        const unprocessed = problems.filter(p => !p.variantLatex);
-        if (unprocessed.length === 0) return;
+        if (problems.length === 0) return;
+        
+        // If there are unprocessed problems, only process those to save tokens.
+        // If all problems already have variants, regenerate ALL of them for a new set.
+        const targetProblems = problems.some(p => !p.variantLatex) 
+          ? problems.filter(p => !p.variantLatex) 
+          : problems;
         
         setStatus('gen_loading');
         setErrorMsg("");
@@ -429,7 +434,7 @@
           const payload = {
             contents: [{
               role: "user",
-              parts: [{ text: prompt + "\n\nInput Data:\n" + JSON.stringify(unprocessed) }]
+              parts: [{ text: prompt + "\n\nInput Data:\n" + JSON.stringify(targetProblems) }]
             }],
             generationConfig: {
               responseMimeType: "application/json",
@@ -462,10 +467,10 @@
           const extractedText = result.candidates?.[0]?.content?.parts?.[0]?.text;
           if (!extractedText) throw new Error("No text returned from AI.");
           
-          const updatedUnprocessed = JSON.parse(extractedText);
+          const updatedProblemsData = JSON.parse(extractedText);
           
           setProblems(prev => prev.map(p => {
-            const updated = updatedUnprocessed.find(u => u._uid === p._uid);
+            const updated = updatedProblemsData.find(u => u._uid === p._uid);
             if (updated) {
               return { 
                 ...p, 
@@ -601,11 +606,15 @@
                   
                   <button 
                     onClick={generateTwins}
-                    disabled={!problems.some(p => !p.variantLatex) || status === 'gen_loading'}
+                    disabled={problems.length === 0 || status === 'gen_loading'}
                     className="w-full flex justify-center items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50"
                   >
                     {status === 'gen_loading' ? <IconLoader /> : <IconWand />}
-                    {status === 'gen_loading' ? "Generating Variants..." : "Create Twin Problems"}
+                    {status === 'gen_loading' 
+                      ? "Generating Variants..." 
+                      : problems.some(p => !p.variantLatex) 
+                        ? "Create Twin Problems" 
+                        : "Regenerate All Twins"}
                   </button>
                 </div>
 
