@@ -43,6 +43,12 @@
         width: 100%;
         height: auto !important;
         max-width: 100%;
+        overflow: visible !important; /* Prevent AI shapes from clipping at edges */
+    }
+    
+    /* Allow foreignObjects to bleed over boundaries to prevent LaTeX clipping */
+    .diagram-wrapper foreignObject {
+        overflow: visible !important;
     }
 
     @media screen {
@@ -319,9 +325,11 @@
              - Incorrect: \`$x가 정수일 때$\` (This causes fatal rendering errors)
           5. DIAGRAMS (CRITICAL): If the image contains formal printed geometric shapes, coordinate planes, grids, number lines, arcs, etc., you MUST recreate them accurately using raw HTML <svg> code in the 'diagramSvg' field. 
              - You are an expert SVG coder. Write the full SVG code using <rect>, <polygon>, <path>, <circle>, <line>. 
-             - DO NOT use the diagram placeholder if you can draw it. Write the SVG!
+             - PADDING: ALWAYS add generous padding to your viewBox (e.g., viewBox="-40 -40 400 300") so no shapes or labels are cut off at the edges.
+             - MULTIPLE CHOICE GRAPHS: If the multiple-choice options (①~⑤) are themselves diagrams (like 5 different number lines), you MUST draw ALL 5 of them neatly spaced out vertically inside the single 'diagramSvg' and label them (①, ②, etc.).
+             - SIMPLE LABELS: For simple numbers (like 1, -3, 0) or single letters (A, B, x), use standard SVG <text> tags (e.g., <text x="50" y="50" text-anchor="middle" font-size="14">-3</text>).
+             - COMPLEX MATH LABELS: ONLY use <foreignObject> for complex LaTeX math (fractions, roots, exponents). Example: <foreignObject x="10" y="20" width="120" height="60" overflow="visible"><div xmlns="http://www.w3.org/1999/xhtml" style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; font-size:14px; white-space:nowrap;">$(- \\frac{ab}{2})^2$</div></foreignObject>.
              - COMPLETELY IGNORE freehand drawings, scribbles, or grading lines. ONLY draw the formal, printed diagram.
-             - For diagram math labels, DO NOT use standard <text> tags. You MUST use <foreignObject overflow="visible"> embedding a HTML <div> with strict LaTeX enclosed in $...$. Example: <foreignObject x="10" y="20" width="100" height="50" overflow="visible"><div xmlns="http://www.w3.org/1999/xhtml" style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; font-size:14px;">$(- \\frac{ab}{2})^2$</div></foreignObject>.
           6. Replace geometric images ONLY IF they are real photographs with "[Insert Diagram: <description>]" in the 'diagramPlaceholder' field. Otherwise, leave it empty.
           7. NUMBERING: The questions MUST be numbered sequentially starting from ${nextId}. The very first question you extract MUST be labeled as "${nextId}".
           8. FORMATTING: Use actual line breaks in your text, DO NOT output literal '\\n' sequences.
@@ -429,7 +437,10 @@
           8. FORMATTING: Use actual line breaks in your text, DO NOT output literal '\\n' sequences.
           9. NO BARE COMMANDS: NEVER use LaTeX commands like \\boxed{} or \\text{} outside of math blocks. Use plain text like (가) for blanks.
           10. JSON ESCAPING: Since you are outputting JSON, properly escape backslashes. Write "\\\\frac" instead of "\\frac", "\\\\sqrt" instead of "\\sqrt".
-          11. DIAGRAMS: If the original problem has a 'diagramSvg', you MUST generate a 'variantDiagramSvg' with the SAME shapes, but UPDATE the <foreignObject> labels inside the SVG to match the new numbers/variables in your Twin Variant using strict LaTeX ($...$). Ensure the <foreignObject> width/height is large enough. If the original had no SVG, leave empty.`;
+          11. DIAGRAMS: If the original problem has a 'diagramSvg', you MUST generate a 'variantDiagramSvg' with the SAME shapes, but UPDATE the labels inside the SVG to match the new numbers/variables in your Twin Variant.
+             - PADDING: Ensure your viewBox has generous padding so nothing is cut off.
+             - SIMPLE LABELS: Use standard <text> tags for simple numbers/variables.
+             - COMPLEX MATH LABELS: Use <foreignObject overflow="visible"> embedding strict LaTeX ($...$) for complex math (fractions, roots). Ensure the <foreignObject> width/height is large enough. If the original had no SVG, leave empty.`;
 
           const payload = {
             contents: [{
